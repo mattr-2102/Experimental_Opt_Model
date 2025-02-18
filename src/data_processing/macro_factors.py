@@ -1,36 +1,30 @@
 import yfinance as yf
 import pandas as pd
+from src.config.config_loader import DATA_CONFIG, MODEL_PATHS
 
 class MacroIndicators:
     def __init__(self):
         self.data = {}
 
-    def fetch_vix(self):
-        """Fetch VIX (Market Volatility) index"""
-        self.data["VIX"] = yf.download("^VIX", period="5y")["Close"]
+    def fetch_macro_indicators(self):
+        """Fetch macro indicators from Yahoo Finance."""
+        for indicator in DATA_CONFIG["data_sources"]["macro_indicators"]:
+            try:
+                self.data[indicator] = yf.download(indicator, start=DATA_CONFIG["data_sources"]["start_date"], 
+                                                   end=DATA_CONFIG["data_sources"]["end_date"])["Close"]
+                print(f"📈 Fetched {indicator}")
+            except Exception as e:
+                print(f"⚠️ Error fetching {indicator}: {e}")
 
-    def fetch_move(self):
-        """Fetch MOVE index (Bond Market Volatility)"""
-        self.data["MOVE"] = yf.download("^MOVE", period="5y")["Close"]
-
-    def fetch_vvix(self):
-        """Fetch VVIX (VIX of VIX)"""
-        self.data["VVIX"] = yf.download("^VVIX", period="5y")["Close"]
-
-    def fetch_fed_statements(self):
-        """Fetch Fed statements (placeholder for API-based source)"""
-        self.data["Fed_Statements"] = "Not Implemented"
-
-    def save_to_csv(self, filename="data/processed/macro_indicators.csv"):
-        """Save macro indicators data"""
+    def save_to_csv(self):
+        """Save macro indicators data."""
+        filename = MODEL_PATHS["paths"]["macro_indicators"]
         df = pd.DataFrame(self.data)
         df.to_csv(filename)
-        print(f"Saved macro indicators data to {filename}")
+        print(f"✅ Saved macro indicators data to {filename}")
 
 # Example Usage:
 if __name__ == "__main__":
     macro = MacroIndicators()
-    macro.fetch_vix()
-    macro.fetch_move()
-    macro.fetch_vvix()
+    macro.fetch_macro_indicators()
     macro.save_to_csv()
