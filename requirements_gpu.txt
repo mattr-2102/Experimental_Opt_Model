@@ -1,0 +1,22 @@
+# GPU-Optimized Dependencies
+# These must be installed separately for CUDA support
+# Instructions:
+# CUDA Version (for GTX 1080Ti with CUDA 11.8)
+# pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+# pip install tensorflow-gpu==2.10
+# pip install torch-geometric torch-scatter torch-sparse torch-cluster torch-spline-conv -f https://data.pyg.org/whl/torch-2.0.0+cu118.html
+
+tensorflow-gpu==2.10
+flash-attn
+nystromformer
+
+# Graph Neural Networks (PyTorch Geometric - CUDA-optimized)
+torch-geometric
+torch-scatter
+torch-sparse
+torch-cluster
+torch-spline-conv
+
+# Reinforcement Learning (Ensure Compatibility with CUDA)
+rllib
+stable-baselines3

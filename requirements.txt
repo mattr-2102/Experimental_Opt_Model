@@ -1,23 +1,18 @@
-# First, install PyTorch manually (adjust for CUDA or CPU)
-# CUDA version: pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
-# CPU version: pip install torch torchvision torchaudio
-
 # MUST INSTALL INFORMER2020 MANUALLY AT THE END
 
 # Core Data Processing
 pandas
-numpy
+numpy==1.26.4
 scipy
 
 # Technical Indicators
-ta
+ta-lib
 pandas_ta
 
 # Machine Learning & Deep Learning
 scikit-learn
 xgboost
 lightgbm
-tensorflow==2.10
 pytorch-lightning
 tqdm
 
@@ -25,16 +20,7 @@ tqdm
 pyro-ppl
 scikit-optimize
 
-# Time-Series Forecasting
-flash-attn
-nystromformer
-
 # Graph Neural Networks (Market Microstructure)
-torch-geometric
-torch-scatter
-torch-sparse
-torch-cluster
-torch-spline-conv
 networkx
 
 # NLP & Sentiment Analysis
@@ -46,9 +32,7 @@ yfinance
 alpha_vantage
 
 # Reinforcement Learning for Trade Execution
-rllib
 gym
-stable-baselines3
 
 # Model Evaluation & Feature Selection
 shap
@@ -67,4 +51,3 @@ seaborn
 hydra-core
 jupyter
 ipywidgets
-
