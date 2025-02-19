@@ -5,7 +5,6 @@ def load_config(file_path):
     with open(file_path, "r") as file:
         return yaml.safe_load(file)
 
-# Load specific configurations
 DATA_CONFIG = load_config("src/config/data_sources.yaml")
 MODEL_PATHS = load_config("src/config/model_paths.yaml")
 

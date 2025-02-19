@@ -43,7 +43,18 @@ class OptionsDataProcessor:
         if not required_cols.issubset(self.options_data.columns):
             print(f"⚠️ Missing required columns in options data for {self.ticker}. Skipping.")
             self.options_data = None
-        return self.options_data
+            return None
+        
+        # 🔹 Save the unfiltered data first
+        raw_filename = MODEL_PATHS["paths"]["unfiltered_options_chain"].format(ticker=self.ticker)
+        self.options_data.to_csv(raw_filename, index=False)
+        print(f"✅ Saved unfiltered options chain data to {raw_filename}")
+
+        # 🔹 Fetch stock price once
+        stock_price = stock.history(period="1d")["Close"].iloc[-1]
+
+        # 🔹 Process, save, and return **filtered and sampled** data
+        return self.process_and_save(stock_price)
 
     def filter_options(self, stock_price, min_oi=500, atm_range=0.05):
         """Filter options based on open interest and moneyness."""
@@ -66,27 +77,32 @@ class OptionsDataProcessor:
             print(f"⚠️ No options data left after filtering for {self.ticker}.")
         return self.options_data
 
-
-    def process_and_save(self):
-        """Save processed and sampled options chain using dynamic filename."""
-        stock_price = yf.Ticker(self.ticker).history(period="1d")["Close"].iloc[-1]  
-        self.filter_options(stock_price)  
+    def process_and_save(self, stock_price):
+        """Filter and sample the options data, save all versions, and return the final processed dataset."""
+        self.filter_options(stock_price)
 
         if self.options_data is None or self.options_data.empty:
             print(f"⚠️ No valid options data for {self.ticker}. Skipping save.")
-            return
+            return None
 
-        processed_filename = MODEL_PATHS["paths"]["options_chain"].format(ticker=self.ticker)
-        self.options_data.to_csv(processed_filename, index=False)
-        print(f"✅ Saved processed options chain data to {processed_filename}")
+        # 🔹 Save the **filtered options data**
+        filtered_filename = MODEL_PATHS["paths"]["options_chain"].format(ticker=self.ticker)
+        self.options_data.to_csv(filtered_filename, index=False)
+        print(f"✅ Saved filtered options chain data to {filtered_filename}")
         
-        # Apply Smart Sampling
+        # 🔹 Apply smart sampling
         if "sampled_options_chain" in MODEL_PATHS["paths"]:  # Ensure key exists
             sampled_filename = MODEL_PATHS["paths"]["sampled_options_chain"].format(ticker=self.ticker)
             sampled_data = stratified_sampling(self.options_data, sample_size=500)
 
             if sampled_data.empty:
                 print(f"⚠️ No sampled data available for {self.ticker}. Skipping sampled save.")
-                return
+                return None
 
             save_sampled_data(sampled_data, self.ticker, sampled_filename)
+            print(f"✅ Saved sampled options chain data to {sampled_filename}")
+            
+            # 🔹 Return the sampled dataset instead of raw data
+            return sampled_data
+        
+        return self.options_data  # Default return filtered data if sampling fails

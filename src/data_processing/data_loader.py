@@ -1,7 +1,7 @@
 import os
 import pandas as pd
 from src.config.config_loader import DATA_CONFIG, MODEL_PATHS
-from src.data_processing.fetch_market_data import MarketDataProcessor
+from src.data_processing.market_data import MarketDataProcessor
 from src.data_processing.options_chain import OptionsDataProcessor
 from src.data_processing.macro_factors import MacroIndicators
 
@@ -10,9 +10,7 @@ class DataLoader:
         self.ticker = ticker
 
     def _check_and_fetch_data(self, file_path, fetch_function):
-        """
-        Checks if the file exists. If not, calls the fetch function to generate it.
-        """
+        """Checks if the file exists. If not, calls the fetch function to generate it."""
         if not os.path.exists(file_path):
             print(f"📌 {file_path} not found. Fetching and processing data for {self.ticker}...")
             fetch_function()
@@ -54,16 +52,3 @@ class DataLoader:
         macro = MacroIndicators()
         macro.fetch_macro_indicators()
         macro.save_to_csv()
-
-# Example Usage
-if __name__ == "__main__":
-    for ticker in DATA_CONFIG["data_sources"]["tickers"]:
-        loader = DataLoader(ticker)
-
-        market_data = loader.load_market_data()
-        options_data = loader.load_options_data()
-        macro_data = loader.load_macro_indicators()
-
-        print("📊 Market Data Sample:\n", market_data.head())
-        print("📊 Options Data Sample:\n", options_data.head())
-        print("📊 Macro Indicators Sample:\n", macro_data.head())
