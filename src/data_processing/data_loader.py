@@ -51,4 +51,5 @@ class DataLoader:
         """Fetch and process macro indicators if they do not exist."""
         macro = MacroIndicators()
         macro.fetch_macro_indicators()
-        macro.save_to_csv()
+        macro.save_to_csv()  # Now saving to file after fetching
+
