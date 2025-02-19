@@ -11,9 +11,13 @@ class OptionsDataProcessor:
     def fetch_options_chain(self):
         """Fetch options chain from Yahoo Finance."""
         stock = yf.Ticker(self.ticker)
-        expirations = stock.options  # Get expiration dates
-        data = []
+        expirations = stock.options
 
+        if not expirations:
+            print(f"⚠️ No options data available for {self.ticker}. Skipping.")
+            return None
+
+        data = []
         for exp in expirations:
             try:
                 opt_chain = stock.option_chain(exp)
@@ -26,34 +30,64 @@ class OptionsDataProcessor:
                 data.append(calls)
                 data.append(puts)
             except Exception as e:
-                print(f"⚠️ Error fetching options for {exp}: {e}")
+                print(f"⚠️ Error fetching options for {self.ticker} ({exp}): {e}")
 
-        self.options_data = pd.concat(data)
-        self.options_data.reset_index(drop=True, inplace=True)
+        if not data:
+            print(f"⚠️ No options data retrieved for {self.ticker}. Skipping.")
+            return None
+
+        self.options_data = pd.concat(data, ignore_index=True)
+
+        # Validate required columns before further processing
+        required_cols = {"strike", "openInterest", "volume"}
+        if not required_cols.issubset(self.options_data.columns):
+            print(f"⚠️ Missing required columns in options data for {self.ticker}. Skipping.")
+            self.options_data = None
         return self.options_data
 
-    def filter_options(self, min_oi=500, atm_range=0.05):
-        """Filter options: High OI & ATM."""
-        stock_price = yf.Ticker(self.ticker).history(period="1d")["Close"].iloc[-1]
+    def filter_options(self, stock_price, min_oi=500, atm_range=0.05):
+        """Filter options based on open interest and moneyness."""
+        if self.options_data is None or self.options_data.empty:
+            print(f"⚠️ No valid options data for {self.ticker}. Skipping filtering.")
+            return None
+
         self.options_data["Moneyness"] = abs(self.options_data["strike"] - stock_price) / stock_price
-        self.options_data = self.options_data[(self.options_data["openInterest"] >= min_oi) & (self.options_data["Moneyness"] <= atm_range)]
+        self.options_data = self.options_data[
+            (self.options_data["openInterest"] >= min_oi) & 
+            (self.options_data["Moneyness"] <= atm_range)
+        ]
+
+        if self.options_data.empty:
+            print(f"⚠️ No options data left after filtering for {self.ticker}.")
         return self.options_data
 
     def process_and_save(self):
         """Save processed and sampled options chain using dynamic filename."""
+        stock_price = yf.Ticker(self.ticker).history(period="1d")["Close"].iloc[-1]  
+        self.filter_options(stock_price)  
+
+        if self.options_data is None or self.options_data.empty:
+            print(f"⚠️ No valid options data for {self.ticker}. Skipping save.")
+            return
+
         processed_filename = MODEL_PATHS["paths"]["options_chain"].format(ticker=self.ticker)
         self.options_data.to_csv(processed_filename, index=False)
         print(f"✅ Saved processed options chain data to {processed_filename}")
         
         # Apply Smart Sampling
-        sampled_filename = MODEL_PATHS["paths"]["sampled_options_chain"].format(ticker=self.ticker)
-        sampled_data = stratified_sampling(self.options_data, sample_size=500)
-        save_sampled_data(sampled_data, self.ticker, sampled_filename)
+        if "sampled_options_chain" in MODEL_PATHS["paths"]:  # Ensure key exists
+            sampled_filename = MODEL_PATHS["paths"]["sampled_options_chain"].format(ticker=self.ticker)
+            sampled_data = stratified_sampling(self.options_data, sample_size=500)
+
+            if sampled_data.empty:
+                print(f"⚠️ No sampled data available for {self.ticker}. Skipping sampled save.")
+                return
+
+            save_sampled_data(sampled_data, self.ticker, sampled_filename)
 
 # Example Usage:
 if __name__ == "__main__":
     for ticker in DATA_CONFIG["data_sources"]["tickers"]:
         processor = OptionsDataProcessor(ticker)
         processor.fetch_options_chain()
-        processor.filter_options()
         processor.process_and_save()
