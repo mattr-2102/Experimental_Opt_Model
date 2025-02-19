@@ -25,13 +25,10 @@ class MarketDataProcessor:
 
     def save_to_csv(self):
         """Save processed market data using dynamic filename."""
+        if self.df is None or self.df.empty:
+            print(f"⚠️ No data available for {self.ticker}. Skipping save.")
+            return
+        
         filename = MODEL_PATHS["paths"]["market_data"].format(ticker=self.ticker)
         self.df.to_csv(filename, index=False)
         print(f"✅ Saved market data for {self.ticker} to {filename}")
-
-# Example Usage:
-if __name__ == "__main__":
-    for ticker in DATA_CONFIG["data_sources"]["tickers"]:
-        processor = MarketDataProcessor(ticker)
-        processor.process_data()
-        processor.save_to_csv()

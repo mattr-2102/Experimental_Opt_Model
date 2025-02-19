@@ -51,6 +51,11 @@ class OptionsDataProcessor:
             print(f"⚠️ No valid options data for {self.ticker}. Skipping filtering.")
             return None
 
+        required_cols = {"strike", "openInterest", "volume"}
+        if not required_cols.issubset(self.options_data.columns):
+            print(f"⚠️ Missing required columns in options data for {self.ticker}. Skipping filtering.")
+            return None
+
         self.options_data["Moneyness"] = abs(self.options_data["strike"] - stock_price) / stock_price
         self.options_data = self.options_data[
             (self.options_data["openInterest"] >= min_oi) & 
@@ -60,6 +65,7 @@ class OptionsDataProcessor:
         if self.options_data.empty:
             print(f"⚠️ No options data left after filtering for {self.ticker}.")
         return self.options_data
+
 
     def process_and_save(self):
         """Save processed and sampled options chain using dynamic filename."""
@@ -84,10 +90,3 @@ class OptionsDataProcessor:
                 return
 
             save_sampled_data(sampled_data, self.ticker, sampled_filename)
-
-# Example Usage:
-if __name__ == "__main__":
-    for ticker in DATA_CONFIG["data_sources"]["tickers"]:
-        processor = OptionsDataProcessor(ticker)
-        processor.fetch_options_chain()
-        processor.process_and_save()

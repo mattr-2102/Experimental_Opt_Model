@@ -8,12 +8,10 @@ class SentimentAnalyzer:
 
     def analyze_sentiment(self, text):
         """Perform sentiment analysis on financial news."""
+        if not text or not isinstance(text, str):
+            print("⚠️ Invalid input text. Skipping sentiment analysis.")
+            return None
+
         inputs = self.tokenizer(text, return_tensors="pt")
         outputs = self.model(**inputs)
         return torch.softmax(outputs.logits, dim=1).detach().numpy()
-
-# Example Usage:
-if __name__ == "__main__":
-    analyzer = SentimentAnalyzer()
-    sentiment = analyzer.analyze_sentiment("Stocks are expected to rise.")
-    print("Sentiment Scores:", sentiment)

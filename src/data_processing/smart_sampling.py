@@ -5,6 +5,9 @@ from src.config.config_loader import DATA_CONFIG, MODEL_PATHS
 
 def compute_liquidity_score(df):
     """Compute liquidity score based on open interest and volume."""
+    if df[["openInterest", "volume"]].isnull().any().any():
+        raise ValueError("❌ Missing values detected in 'openInterest' or 'volume'. Data must be cleaned before processing.")
+
     df["Liquidity_Score"] = df["openInterest"] * df["volume"]
     return df
 
