@@ -1,6 +1,7 @@
 import yfinance as yf
 import pandas as pd
 from src.config.config_loader import DATA_CONFIG, MODEL_PATHS
+from src.data_processing.smart_sampling import stratified_sampling, save_sampled_data
 
 class OptionsDataProcessor:
     def __init__(self, ticker):
@@ -38,11 +39,16 @@ class OptionsDataProcessor:
         self.options_data = self.options_data[(self.options_data["openInterest"] >= min_oi) & (self.options_data["Moneyness"] <= atm_range)]
         return self.options_data
 
-    def save_to_csv(self):
-        """Save processed options chain using dynamic filename."""
-        filename = MODEL_PATHS["paths"]["options_chain"].format(ticker=self.ticker)
-        self.options_data.to_csv(filename, index=False)
-        print(f"✅ Saved options chain data to {filename}")
+    def process_and_save(self):
+        """Save processed and sampled options chain using dynamic filename."""
+        processed_filename = MODEL_PATHS["paths"]["options_chain"].format(ticker=self.ticker)
+        self.options_data.to_csv(processed_filename, index=False)
+        print(f"✅ Saved processed options chain data to {processed_filename}")
+        
+        # Apply Smart Sampling
+        sampled_filename = MODEL_PATHS["paths"]["sampled_options_chain"].format(ticker=self.ticker)
+        sampled_data = stratified_sampling(self.options_data, sample_size=500)
+        save_sampled_data(sampled_data, self.ticker, sampled_filename)
 
 # Example Usage:
 if __name__ == "__main__":
@@ -50,4 +56,4 @@ if __name__ == "__main__":
         processor = OptionsDataProcessor(ticker)
         processor.fetch_options_chain()
         processor.filter_options()
-        processor.save_to_csv()
+        processor.process_and_save()
