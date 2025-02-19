@@ -14,10 +14,22 @@ class MarketDataProcessor:
     def fetch_data(self):
         """Download stock price data using Yahoo Finance."""
         print(f"📥 Fetching stock data for {self.ticker} from {self.start} to {self.end}...")
-        self.df = yf.download(self.ticker, start=self.start, end=self.end)
+        self.df = yf.download(self.ticker, start=self.start, end=self.end, auto_adjust=True)
 
         if self.df.empty:
-            raise ValueError(f"❌ No data fetched for {self.ticker}. Check API connection or ticker validity.")
+            raise ValueError(f"❌ No data fetched for {self.ticker}. Check API connection or ticker validity.")        
+
+        self.df.columns = self.df.columns.droplevel(1)  # Removes 'Ticker' row
+        self.df.reset_index(inplace=True)  # Moves 'Date' from index to column
+
+        print("📊 Downloaded Data Sample:\n", self.df.head())  
+        print("📊 Columns Retrieved:", self.df.columns)  
+
+        # ✅ Ensure all expected columns exist
+        expected_columns = {"Open", "High", "Low", "Close", "Volume"}
+        missing_columns = expected_columns - set(self.df.columns)
+        if missing_columns:
+            raise ValueError(f"❌ Missing expected columns: {missing_columns}")
 
         self.df.dropna(inplace=True)
         return self.df

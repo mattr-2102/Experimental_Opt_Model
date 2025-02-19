@@ -1,6 +1,6 @@
 import os
 import pandas as pd
-from src.config.config_loader import DATA_CONFIG, MODEL_PATHS
+from src.config.config_loader import MODEL_PATHS
 from src.data_processing.market_data import MarketDataProcessor
 from src.data_processing.options_chain import OptionsDataProcessor
 from src.data_processing.macro_factors import MacroIndicators
