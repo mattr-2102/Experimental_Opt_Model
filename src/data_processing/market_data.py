@@ -1,5 +1,5 @@
 import os
-import yfinance as yf
+import alpha as yf
 import pandas as pd
 from src.config.config_loader import DATA_CONFIG, MODEL_PATHS
 from src.data_processing.technical_indicators import add_technical_indicators
@@ -10,17 +10,24 @@ class MarketDataProcessor:
         self.start = DATA_CONFIG["data_sources"]["start_date"]
         self.end = DATA_CONFIG["data_sources"]["end_date"]
         self.df = None  # Placeholder for data
+        self.api_key = DATA_CONFIG["data_sources"]["alpha_api"]
 
     def fetch_data(self):
         """Download stock price data using Yahoo Finance."""
         print(f"📥 Fetching stock data for {self.ticker} from {self.start} to {self.end}...")
-        self.df = yf.download(self.ticker, start=self.start, end=self.end, auto_adjust=True)
-
+        ts = TimeSeries(key=api_key, output_format='pandas')
+    
         if self.df.empty:
             raise ValueError(f"❌ No data fetched for {self.ticker}. Check API connection or ticker validity.")        
 
-        self.df.columns = self.df.columns.droplevel(1)  # Removes 'Ticker' row
-        self.df.reset_index(inplace=True)  # Moves 'Date' from index to column
+        # Convert index to datetime
+        data.index = pd.to_datetime(data.index)
+        # Filter the DataFrame for the specified date range
+        start_dt = pd.to_datetime(start_date)
+        end_dt = pd.to_datetime(end_date)
+        data = data.loc[(data.index >= start_dt) & (data.index <= end_dt)]
+        # Reset index for saving
+        data.reset_index(inplace=True)
 
         print("📊 Downloaded Data Sample:\n", self.df.head())  
         print("📊 Columns Retrieved:", self.df.columns)  

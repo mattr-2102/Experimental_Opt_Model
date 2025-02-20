@@ -1,46 +1,44 @@
-import yfinance as yf
-import pandas as pd
 import os
+import pandas as pd
+from datetime import datetime
+from alpha_vantage.timeseries import TimeSeries
 
-def download_options_data(ticker, save_path="tests"):
-    """Downloads all available options data for a given ticker and saves it as a CSV."""
+def download_market_data(ticker, save_path="tests", start_date="2025-01-01", end_date="2025-01-31"):
+    """
+    Downloads market data for a specified date range using Alpha Vantage and saves it as a CSV.
+    
+    Parameters:
+    - ticker: The stock ticker symbol.
+    - save_path: The directory where the CSV will be saved.
+    - start_date: Start date in 'YYYY-MM-DD' format.
+    - end_date: End date in 'YYYY-MM-DD' format.
+    """
     os.makedirs(save_path, exist_ok=True)  # Ensure save directory exists
 
-    stock = yf.Ticker(ticker)
-    expirations = stock.options  # List of available expiration dates
+    # Get the Alpha Vantage API key from your config (hardcoded here for demonstration)
+    api_key = "2V6AECCNMRV5OE9J"
+    ts = TimeSeries(key=api_key, output_format='pandas')
 
-    if not expirations:
-        print(f"❌ No options data available for {ticker}.")
-        return
+    # Fetch daily data using 'full' to retrieve all historical data
+    data, meta_data = ts.get_daily(symbol=ticker, outputsize='full')
+    
+    # Convert index to datetime
+    data.index = pd.to_datetime(data.index)
+    
+    # Filter the DataFrame for the specified date range
+    start_dt = pd.to_datetime(start_date)
+    end_dt = pd.to_datetime(end_date)
+    data = data.loc[(data.index >= start_dt) & (data.index <= end_dt)]
+    
+    # Reset index for saving
+    data.reset_index(inplace=True)
 
-    data = []
-    for exp in expirations:
-        try:
-            opt_chain = stock.option_chain(exp)
-            calls = opt_chain.calls
-            puts = opt_chain.puts
-            calls["Type"] = "Call"
-            puts["Type"] = "Put"
-            calls["Expiration"] = exp
-            puts["Expiration"] = exp
-            data.append(calls)
-            data.append(puts)
-        except Exception as e:
-            print(f"⚠️ Error fetching options for {self.ticker} ({exp}): {e}")
-
-    if not data:
-        print(f"❌ No options data retrieved for {ticker}.")
-        return
-
-    # Combine all options data into a single DataFrame
-    options_df = pd.concat(data, ignore_index=True)
-
-    # Save to CSV
-    file_path = os.path.join(save_path, f"{ticker}_options.csv")
-    options_df.to_csv(file_path, index=False)
-
-    print(f"✅ Saved {ticker} options data to {file_path}")
+    file_path = os.path.join(save_path, f"{ticker}_market_{start_date}_to_{end_date}.csv")
+    data.to_csv(file_path, index=False)
+    
+    print(f"✅ Saved market data for {ticker} from {start_date} to {end_date} to {file_path}")
 
 # Example usage
 if __name__ == "__main__":
-    download_options_data("SPY")  # Change ticker as needed
+    # Update the start_date and end_date as needed.
+    download_market_data("SPY", start_date="2023-01-01", end_date="2023-01-31")
