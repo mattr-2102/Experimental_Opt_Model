@@ -1,44 +1,58 @@
 import os
 import pandas as pd
+import requests
 from datetime import datetime
-from alpha_vantage.timeseries import TimeSeries
 
 def download_market_data(ticker, save_path="tests", start_date="2025-01-01", end_date="2025-01-31"):
     """
-    Downloads market data for a specified date range using Alpha Vantage and saves it as a CSV.
-    
-    Parameters:
-    - ticker: The stock ticker symbol.
-    - save_path: The directory where the CSV will be saved.
-    - start_date: Start date in 'YYYY-MM-DD' format.
-    - end_date: End date in 'YYYY-MM-DD' format.
+    Downloads OHLCV market data for a specified date range using the Polygon API and saves it as a CSV.
     """
-    os.makedirs(save_path, exist_ok=True)  # Ensure save directory exists
+    os.makedirs(save_path, exist_ok=True)  # Ensure the save directory exists
 
-    # Get the Alpha Vantage API key from your config (hardcoded here for demonstration)
-    api_key = "2V6AECCNMRV5OE9J"
-    ts = TimeSeries(key=api_key, output_format='pandas')
-
-    # Fetch daily data using 'full' to retrieve all historical data
-    data, meta_data = ts.get_daily(symbol=ticker, outputsize='full')
+    # Polygon API key (hardcoded for demonstration)
+    api_key = "UvSnRxq0stT5Lb9p2rvGO6JBFzzBuclX"
     
-    # Convert index to datetime
-    data.index = pd.to_datetime(data.index)
+    # Build the URL for daily aggregates (OHLCV data) using Polygon's Aggregates endpoint.
+    # Here, multiplier=1 and timespan=day returns daily bars.
+    url = (f"https://api.polygon.io/v2/aggs/ticker/{ticker}/range/1/day/"
+           f"{start_date}/{end_date}?adjusted=true&sort=asc&apiKey={api_key}")
     
-    # Filter the DataFrame for the specified date range
-    start_dt = pd.to_datetime(start_date)
-    end_dt = pd.to_datetime(end_date)
-    data = data.loc[(data.index >= start_dt) & (data.index <= end_dt)]
+    print(f"Fetching market data for {ticker} from {start_date} to {end_date}...")
+    response = requests.get(url)
+    if response.status_code != 200:
+        print(f"❌ Error fetching market data: HTTP {response.status_code}")
+        return
     
-    # Reset index for saving
-    data.reset_index(inplace=True)
-
+    json_data = response.json()
+    
+    # The Polygon API returns the results in a key called "results"
+    results = json_data.get("results", [])
+    if not results:
+        print(f"❌ No data found for {ticker} between {start_date} and {end_date}.")
+        return
+    
+    # Convert the results list to a DataFrame.
+    df = pd.DataFrame(results)
+    
+    df["Date"] = pd.to_datetime(df["t"], unit="ms")
+    df["Open"] = df["o"]
+    df["High"] = df["h"]
+    df["Low"] = df["l"]
+    df["Close"] = df["c"]
+    df["Volume"] = df["v"]
+    
+    # Ensure data is sorted by Date in ascending order
+    df = df.sort_values("Date")
+    
+    # Select only the relevant columns
+    df = df[["Date", "Open", "High", "Low", "Close", "Volume"]]
+    
+    # Save the combined data as CSV
     file_path = os.path.join(save_path, f"{ticker}_market_{start_date}_to_{end_date}.csv")
-    data.to_csv(file_path, index=False)
+    df.to_csv(file_path, index=False)
     
     print(f"✅ Saved market data for {ticker} from {start_date} to {end_date} to {file_path}")
 
 # Example usage
 if __name__ == "__main__":
-    # Update the start_date and end_date as needed.
-    download_market_data("SPY", start_date="2023-01-01", end_date="2023-01-31")
+    download_market_data("SPY")

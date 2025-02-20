@@ -5,7 +5,7 @@ def add_technical_indicators(df):
     """Compute key technical indicators."""
 
     # Ensure Close, High, Low, and Volume exist before applying indicators
-    required_cols = {"Open", "High", "Low", "Close", "Volume"}
+    required_cols = {"Date", "Open", "High", "Low", "Close", "Volume"}
     missing_cols = required_cols - set(df.columns)
     if missing_cols:
         raise ValueError(f"❌ Missing required columns: {missing_cols}")

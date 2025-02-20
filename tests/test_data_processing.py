@@ -8,7 +8,7 @@ def test_market_data_loading():
     print("\n🔍 Running Market Data Load Test...\n")
     cache_dir = MODEL_PATHS["paths"]["processed_data"]
 
-    for ticker in DATA_CONFIG["data_sources"]["tickers"]:  # ✅ Fixed KeyError here
+    for ticker in DATA_CONFIG["data_sources"]["tickers"]:
         file_path = MODEL_PATHS["paths"]["market_data"].format(ticker=ticker)
 
         loader = DataLoader(ticker)
@@ -32,7 +32,7 @@ def test_options_data_loading():
     print("\n🔍 Running Options Data Load Test...\n")
     cache_dir = MODEL_PATHS["paths"]["processed_data"]
 
-    for ticker in DATA_CONFIG["data_sources"]["tickers"]:  # ✅ Fixed KeyError here
+    for ticker in DATA_CONFIG["data_sources"]["tickers"]:
         file_path = MODEL_PATHS["paths"]["options_chain"].format(ticker=ticker)
 
         loader = DataLoader(ticker)

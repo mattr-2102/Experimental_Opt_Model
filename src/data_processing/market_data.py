@@ -1,6 +1,7 @@
 import os
-import alpha as yf
+from alpha_vantage.timeseries import TimeSeries
 import pandas as pd
+import requests
 from src.config.config_loader import DATA_CONFIG, MODEL_PATHS
 from src.data_processing.technical_indicators import add_technical_indicators
 
@@ -10,25 +11,43 @@ class MarketDataProcessor:
         self.start = DATA_CONFIG["data_sources"]["start_date"]
         self.end = DATA_CONFIG["data_sources"]["end_date"]
         self.df = None  # Placeholder for data
-        self.api_key = DATA_CONFIG["data_sources"]["alpha_api"]
 
     def fetch_data(self):
-        """Download stock price data using Yahoo Finance."""
+        """Download stock price data using Polygon."""
         print(f"📥 Fetching stock data for {self.ticker} from {self.start} to {self.end}...")
-        ts = TimeSeries(key=api_key, output_format='pandas')
+        url = (f"https://api.polygon.io/v2/aggs/ticker/{self.ticker}/range/1/day/"
+        f"{self.start}/{self.end}?adjusted=true&sort=asc&apiKey={DATA_CONFIG["data_sources"]["poly_api"]}")
+        
+        response = requests.get(url)
     
-        if self.df.empty:
+        # check if data can fetch
+        if response.status_code != 200:
             raise ValueError(f"❌ No data fetched for {self.ticker}. Check API connection or ticker validity.")        
 
-        # Convert index to datetime
-        data.index = pd.to_datetime(data.index)
-        # Filter the DataFrame for the specified date range
-        start_dt = pd.to_datetime(start_date)
-        end_dt = pd.to_datetime(end_date)
-        data = data.loc[(data.index >= start_dt) & (data.index <= end_dt)]
-        # Reset index for saving
-        data.reset_index(inplace=True)
+        json_data = response.json()
+        results = json_data.get("results", [])
+        
+        # check if data found
+        if not results:
+            print(f"❌ No data found for {self.ticker} between {self.start_date} and {self.end_date}.")
+            return
+        
+        self.df = pd.DataFrame(results)
+        
+        self.df["Date"] = pd.to_datetime(self.df["t"], unit="ms")
+        self.df["Open"] = self.df["o"]
+        self.df["High"] = self.df["h"]
+        self.df["Low"] = self.df["l"]
+        self.df["Close"] = self.df["c"]
+        self.df["Volume"] = self.df["v"]
+        
+        # Ensure data is sorted by Date in ascending order
+        self.df = self.df.sort_values("Date")
+        
+        # Select only the relevant columns
+        self.df = self.df[["Date", "Open", "High", "Low", "Close", "Volume"]]
 
+        
         print("📊 Downloaded Data Sample:\n", self.df.head())  
         print("📊 Columns Retrieved:", self.df.columns)  
 
@@ -39,6 +58,7 @@ class MarketDataProcessor:
             raise ValueError(f"❌ Missing expected columns: {missing_columns}")
 
         self.df.dropna(inplace=True)
+        self.df.reset_index(inplace=True)
         return self.df
 
     def process_data(self):

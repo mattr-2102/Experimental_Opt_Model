@@ -4,4 +4,4 @@ data_sources:
   macro_indicators: ["^VIX", "^MOVE", "^VVIX"]
   start_date: "2024-01-01"
   end_date: "2025-01-01"
-  alpha_api: 2V6AECCNMRV5OE9J
+  poly_api: UvSnRxq0stT5Lb9p2rvGO6JBFzzBuclX
