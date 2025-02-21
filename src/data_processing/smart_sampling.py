@@ -7,7 +7,6 @@ def compute_liquidity_score(df):
     """Compute liquidity score based on open interest and volume."""
     if df[["openInterest", "volume"]].isnull().any().any():
         raise ValueError("❌ Missing values detected in 'openInterest' or 'volume'. Data must be cleaned before processing.")
-
     df["Liquidity_Score"] = df["openInterest"] * df["volume"]
     return df
 
@@ -23,10 +22,4 @@ def stratified_sampling(df, sample_size=1000):
     for train_idx, _ in sss.split(df, df["Liquidity_Bins"]):
         sampled_df = df.iloc[train_idx]
 
-    return sampled_df.drop(columns=["Liquidity_Bins"])  # Remove temporary bin column
-
-def save_sampled_data(df, ticker, path_template):
-    """Save the sampled options data to a CSV file."""
-    filename = path_template.format(ticker=ticker)
-    df.to_csv(filename, index=False)
-    print(f"✅ Saved sampled options data to {filename}")
+    return sampled_df.drop(columns=["Liquidity_Bins"])

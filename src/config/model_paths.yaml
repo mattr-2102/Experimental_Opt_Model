@@ -1,5 +1,4 @@
 paths:
-  processed_data: "data/processed/"
   options_chain: "data/processed/options_chain_{ticker}.csv"
   sampled_options_chain: "data/processed/sampled_options_chain_{ticker}.csv"
   market_data: "data/processed/market_data_{ticker}.csv"

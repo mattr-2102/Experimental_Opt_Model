@@ -1,7 +1,9 @@
 data_sources:
   tickers: ["SPY"]
-  # yfinance_api: "your_api_key_here"  # If needed for premium API access
   macro_indicators: ["^VIX", "^MOVE", "^VVIX"]
-  start_date: "2024-01-01"
-  end_date: "2025-01-01"
+  days_back: 180
+  intraday_interval: "15/minute"
+  end_date: !now
+  itm-otm: .05
   poly_api: UvSnRxq0stT5Lb9p2rvGO6JBFzzBuclX
+  exp_threshold: 30
